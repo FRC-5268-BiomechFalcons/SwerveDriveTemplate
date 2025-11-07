@@ -1,3 +1,9 @@
+# 5268 SwerveDriveTemplate
+
+A swerve drive template based on [REVrobotics MAXSwerve Template](https://github.com/REVrobotics/MAXSwerve-Java-Template).
+
+The goal of this template is to have some baseline functionality that will be commonly reused year to year.
+
 # MAXSwerve Java Template v2025.1
 
 See [the online changelog](https://github.com/REVrobotics/MAXSwerve-Java-Template/blob/main/CHANGELOG.md) for information about updates to the template that may have been released since you created your project.
