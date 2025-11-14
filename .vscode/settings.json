@@ -65,4 +65,5 @@
     "editor.detectIndentation": false,
     "editor.tabSize": 4
   },
+  "java.saveActions.organizeImports": true,
 }
