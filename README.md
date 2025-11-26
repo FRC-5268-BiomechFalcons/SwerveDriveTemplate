@@ -1,5 +1,14 @@
 # 5268 SwerveDriveTemplate
 
+<p>
+<a href="https://github.com/FRC-5268-BiomechFalcons/SwerveDriveTemplate/actions/workflows/gradle-ci.yml">
+  <img src="https://github.com/FRC-5268-BiomechFalcons/SwerveDriveTemplate/actions/workflows/gradle-ci.yml/badge.svg" width="200px" />
+</a>
+<a href="https://codespaces.new/FRC-5268-BiomechFalcons/SwerveDriveTemplate">
+  <img src="https://github.com/codespaces/badge.svg" width="210px" />
+</a>
+</p>
+
 A swerve drive template based on [REVrobotics MAXSwerve Template](https://github.com/REVrobotics/MAXSwerve-Java-Template).
 
 The goal of this template is to have some baseline functionality that will be commonly reused year to year.
