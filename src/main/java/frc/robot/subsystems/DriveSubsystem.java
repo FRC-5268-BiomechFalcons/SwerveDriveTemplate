@@ -24,13 +24,10 @@ public class DriveSubsystem extends SubsystemBase {
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(DriveConstants.kFrontLeftDrivingCanId,
         DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
-
     private final MAXSwerveModule m_frontRight = new MAXSwerveModule(DriveConstants.kFrontRightDrivingCanId,
         DriveConstants.kFrontRightTurningCanId, DriveConstants.kFrontRightChassisAngularOffset);
-
     private final MAXSwerveModule m_rearLeft = new MAXSwerveModule(DriveConstants.kRearLeftDrivingCanId,
         DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
-
     private final MAXSwerveModule m_rearRight = new MAXSwerveModule(DriveConstants.kRearRightDrivingCanId,
         DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
 
@@ -42,6 +39,9 @@ public class DriveSubsystem extends SubsystemBase {
         Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
         new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                 m_rearLeft.getPosition(), m_rearRight.getPosition() });
+
+    // Percent of max speed, used for fine control
+    private double m_speedModifier = 1.0;
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
@@ -89,8 +89,8 @@ public class DriveSubsystem extends SubsystemBase {
      */
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
         // Convert the commanded speeds into the correct units for the drivetrain
-        double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-        double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
+        double xSpeedDelivered = xSpeed * m_speedModifier * DriveConstants.kMaxSpeedMetersPerSecond;
+        double ySpeedDelivered = ySpeed * m_speedModifier * DriveConstants.kMaxSpeedMetersPerSecond;
         double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(fieldRelative
@@ -157,5 +157,15 @@ public class DriveSubsystem extends SubsystemBase {
      */
     public double getTurnRate() {
         return m_gyro.getRate(IMUAxis.kZ) * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
+    }
+
+    /**
+     * Sets the speed modifier for the drive function.
+     *
+     * @param modifier The speed modifier (0.0 to 1.0)
+     */
+    public void setSpeedModifier(double modifier) {
+        // Clamp between 0.0 and 1.0
+        m_speedModifier = Math.max(0.0, Math.min(1.0, modifier));
     }
 }
