@@ -4,15 +4,13 @@
 
 package frc.robot.subsystems;
 
-import gg.questnav.questnav.PoseFrame;
-import gg.questnav.questnav.QuestNav;
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
-
-import java.lang.reflect.Field;
-
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -21,14 +19,15 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import gg.questnav.questnav.PoseFrame;
+import gg.questnav.questnav.QuestNav;
 
 
 public class DriveSubsystem extends SubsystemBase {
@@ -77,15 +76,15 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putString("quest state", "quest available");
 
             // Get the most recent Quest pose
-            Pose2d questPose = poseFrames[poseFrames.length - 1].questPose()
-                    .transformBy(Constants.QuestConstants.ROBOT_TO_QUEST.inverse());
+            Pose3d questPose = poseFrames[poseFrames.length - 1].questPose3d();
+            Pose3d robotPose = questPose.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST.inverse());
 
             // Logging
-            SmartDashboard.putNumber("quest x", questPose.getX());
-            SmartDashboard.putNumber("quest y", questPose.getY());
-            SmartDashboard.putNumber("quest theta", questPose.getRotation().getDegrees());
+            SmartDashboard.putNumber("quest x", robotPose.getX());
+            SmartDashboard.putNumber("quest y", robotPose.getY());
+            SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
 
-            m_odometry.resetPose(questPose);
+            m_odometry.resetPose(robotPose.toPose2d());
         } else {
             SmartDashboard.putString("quest state", "no quest");
         }
@@ -114,7 +113,8 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearLeft.getPosition(), m_rearRight.getPosition() },
                 pose);
 
-        questNav.setPose(pose.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST));
+        Pose3d pose3d = new Pose3d(pose);
+        questNav.setPose(pose3d.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST));
     }
 
     /**
