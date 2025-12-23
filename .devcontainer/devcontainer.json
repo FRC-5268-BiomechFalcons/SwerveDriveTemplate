@@ -26,6 +26,7 @@
 				"github.copilot",
 				"github.copilot-chat",
 				"eamodio.gitlens",
+				"mhutchie.git-graph",
 				"ms-azuretools.vscode-containers"
 			]
 		}
