@@ -4,8 +4,8 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -104,7 +104,7 @@ public final class Constants {
     }
 
     public static final class QuestConstants {
-        public static final Transform2d ROBOT_TO_QUEST = new Transform2d(-0.0635, 0.2921,
-            Rotation2d.fromDegrees(-90));
+        public static final Transform3d ROBOT_TO_QUEST = new Transform3d(-0.0635, 0.2921, 0.0,
+            new Rotation3d(0.0, 0.0, Units.degreesToRadians(-90)));
     }
 }
