@@ -4,20 +4,30 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
-import frc.robot.Constants.DriveConstants;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.DriveConstants;
+import gg.questnav.questnav.PoseFrame;
+import gg.questnav.questnav.QuestNav;
 
 
 public class DriveSubsystem extends SubsystemBase {
@@ -33,6 +43,9 @@ public class DriveSubsystem extends SubsystemBase {
 
     // The gyro sensor
     private final ADIS16470_IMU m_gyro = new ADIS16470_IMU();
+    private Field2d field = new Field2d();
+    private NetworkTable table = NetworkTableInstance.getDefault().getTable("DriveSubsystem");
+    QuestNav questNav = new QuestNav();
 
     // Odometry class for tracking robot pose
     SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(DriveConstants.kDriveKinematics,
@@ -55,6 +68,29 @@ public class DriveSubsystem extends SubsystemBase {
         m_odometry.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
                 new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition() });
+
+        questNav.commandPeriodic();
+        PoseFrame[] poseFrames = questNav.getAllUnreadPoseFrames();
+
+        if (poseFrames.length > 0) {
+            SmartDashboard.putString("quest state", "quest available");
+
+            // Get the most recent Quest pose
+            Pose3d questPose = poseFrames[poseFrames.length - 1].questPose3d();
+            Pose3d robotPose = questPose.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST.inverse());
+
+            // Logging
+            SmartDashboard.putNumber("quest x", robotPose.getX());
+            SmartDashboard.putNumber("quest y", robotPose.getY());
+            SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
+
+            m_odometry.resetPose(robotPose.toPose2d());
+        } else {
+            SmartDashboard.putString("quest state", "no quest");
+        }
+        field.setRobotPose(getPose());
+        SmartDashboard.putNumber("heading", getHeading());
+        SmartDashboard.putData("Field", field);
     }
 
     /**
@@ -76,6 +112,9 @@ public class DriveSubsystem extends SubsystemBase {
                 new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition() },
                 pose);
+
+        Pose3d pose3d = new Pose3d(pose);
+        questNav.setPose(pose3d.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST));
     }
 
     /**
