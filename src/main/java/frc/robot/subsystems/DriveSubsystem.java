@@ -6,15 +6,18 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTable;
@@ -47,14 +50,23 @@ public class DriveSubsystem extends SubsystemBase {
     private NetworkTable table = NetworkTableInstance.getDefault().getTable("DriveSubsystem");
     QuestNav questNav = new QuestNav();
 
+    private static final List<String> limelights = new ArrayList<>(/*
+                                                                    * "limelight-shooter",
+                                                                    * "limelight" - for example
+                                                                    */);
+
     // Odometry class for tracking robot pose
-    SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(DriveConstants.kDriveKinematics,
+    SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
         Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
         new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                m_rearLeft.getPosition(), m_rearRight.getPosition() });
+                m_rearLeft.getPosition(), m_rearRight.getPosition() },
+        new Pose2d());
 
     // Percent of max speed, used for fine control
     private double m_speedModifier = 1.0;
+
+    // estimated position from a combination of cameras (limelight)
+    Pose2d limelightEstimatedPosition = new Pose2d();
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
@@ -68,6 +80,10 @@ public class DriveSubsystem extends SubsystemBase {
         m_odometry.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
                 new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition() });
+
+        limelights.forEach(limelight -> {
+            limelightPoseTracking(limelight);
+        });
 
         questNav.commandPeriodic();
         PoseFrame[] poseFrames = questNav.getAllUnreadPoseFrames();
@@ -94,12 +110,56 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     /**
+     * Updates the odometry vision measurement using the Limelight's pose readings.
+     * This should be called periodically.
+     * 
+     * @param limelight The limelight string identifier
+     */
+    private void limelightPoseTracking(String limelight) {
+
+        // Variable for whether or not we accept the limelight pose measurement
+        boolean doRejectUpdate = false;
+
+        // Receiving robot pose depending on which alliance we are in
+        LimelightHelpers.PoseEstimate estimatedPose = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
+
+        // Filtering the given pose measurement. Dismissing ambiguous or bad measurements
+        if (estimatedPose.tagCount == 1 && estimatedPose.rawFiducials.length == 1) {
+            if (estimatedPose.rawFiducials[0].ambiguity > .7) {
+                doRejectUpdate = true;
+            }
+            if (estimatedPose.rawFiducials[0].distToCamera > 3) {
+                doRejectUpdate = true;
+            }
+        }
+        if (estimatedPose.tagCount == 0) {
+            doRejectUpdate = true;
+        }
+
+        if (!doRejectUpdate) {
+            // Updating the vision measurement with the given pose from the limelight
+            Pose2d pose = estimatedPose.pose;
+            double timestamp = estimatedPose.timestampSeconds;
+
+            var limelightStdDevs = edu.wpi.first.math.VecBuilder.fill(0.50, // x meters
+                    0.50, // y meters
+                    1 // theta (ignore)
+            );
+
+            limelightEstimatedPosition = pose;
+
+            m_odometry.addVisionMeasurement(pose, timestamp, limelightStdDevs);
+        }
+
+    }
+
+    /**
      * Returns the currently-estimated pose of the robot.
      *
      * @return The pose.
      */
     public Pose2d getPose() {
-        return m_odometry.getPoseMeters();
+        return m_odometry.getEstimatedPosition();
     }
 
     /**
