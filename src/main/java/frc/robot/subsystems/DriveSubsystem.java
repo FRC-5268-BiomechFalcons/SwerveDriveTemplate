@@ -50,6 +50,11 @@ public class DriveSubsystem extends SubsystemBase {
     private NetworkTable table = NetworkTableInstance.getDefault().getTable("DriveSubsystem");
     QuestNav questNav = new QuestNav();
 
+    private static final List<String> limelights = new ArrayList<>(/*
+                                                                    * "limelight-shooter",
+                                                                    * "limelight" - for example
+                                                                    */);
+
     // Odometry class for tracking robot pose
     SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
         Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
@@ -76,13 +81,7 @@ public class DriveSubsystem extends SubsystemBase {
                 new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition() });
 
-        // Put all of the limelights that you use here !!
-        List<String> possibleLimelights = new ArrayList<>(/*
-                                                           * "limelight-shooter", "limelight" - for
-                                                           * example
-                                                           */);
-
-        possibleLimelights.forEach(limelight -> {
+        limelights.forEach(limelight -> {
             limelightPoseTracking(limelight);
         });
 
