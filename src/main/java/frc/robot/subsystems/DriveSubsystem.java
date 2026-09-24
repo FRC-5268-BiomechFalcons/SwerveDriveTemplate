@@ -6,6 +6,9 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -72,6 +75,16 @@ public class DriveSubsystem extends SubsystemBase {
         m_odometry.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
                 new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition() });
+
+        // Put all of the limelights that you use here !!
+        List<String> possibleLimelights = new ArrayList<>(/*
+                                                           * "limelight-shooter", "limelight" - for
+                                                           * example
+                                                           */);
+
+        possibleLimelights.forEach(limelight -> {
+            limelightPoseTracking(limelight);
+        });
 
         questNav.commandPeriodic();
         PoseFrame[] poseFrames = questNav.getAllUnreadPoseFrames();
