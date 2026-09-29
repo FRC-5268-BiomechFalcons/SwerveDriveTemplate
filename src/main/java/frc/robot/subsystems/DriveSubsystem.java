@@ -148,10 +148,7 @@ public class DriveSubsystem extends SubsystemBase {
             return;
 
         // Updating the vision measurement with the given pose from the limelight
-        Pose2d pose = estimatedPose.pose;
-        double timestamp = estimatedPose.timestampSeconds;
-
-        swerveDrivePoseEstimator.addVisionMeasurement(pose, timestamp, limelightStdDevs);
+        swerveDrivePoseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds, limelightStdDevs);
 
     }
 
