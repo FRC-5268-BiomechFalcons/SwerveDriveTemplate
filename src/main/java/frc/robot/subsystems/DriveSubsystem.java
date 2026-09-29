@@ -36,13 +36,13 @@ import gg.questnav.questnav.QuestNav;
 public class DriveSubsystem extends SubsystemBase {
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(DriveConstants.kFrontLeftDrivingCanId,
-        DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
+            DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
     private final MAXSwerveModule m_frontRight = new MAXSwerveModule(DriveConstants.kFrontRightDrivingCanId,
-        DriveConstants.kFrontRightTurningCanId, DriveConstants.kFrontRightChassisAngularOffset);
+            DriveConstants.kFrontRightTurningCanId, DriveConstants.kFrontRightChassisAngularOffset);
     private final MAXSwerveModule m_rearLeft = new MAXSwerveModule(DriveConstants.kRearLeftDrivingCanId,
-        DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
+            DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
     private final MAXSwerveModule m_rearRight = new MAXSwerveModule(DriveConstants.kRearRightDrivingCanId,
-        DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
+            DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
 
     // The gyro sensor
     private final ADIS16470_IMU m_gyro = new ADIS16470_IMU();
@@ -51,24 +51,23 @@ public class DriveSubsystem extends SubsystemBase {
     QuestNav questNav = new QuestNav();
 
     private static final List<String> limelights = new ArrayList<>(/*
-                                                                    * "limelight-shooter",
-                                                                    * "limelight" - for example
-                                                                    */);
+     * "limelight-shooter",
+     * "limelight" - for example
+     */);
 
     // Odometry class for tracking robot pose
-    SwerveDrivePoseEstimator m_odometry = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
-        Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-        new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                m_rearLeft.getPosition(), m_rearRight.getPosition() },
-        new Pose2d());
+    SwerveDrivePoseEstimator swerveDrivePoseEstimator = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
+            Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+            new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                    m_rearLeft.getPosition(), m_rearRight.getPosition()},
+            new Pose2d());
 
     // Percent of max speed, used for fine control
     private double m_speedModifier = 1.0;
 
-    // estimated position from a combination of cameras (limelight)
-    Pose2d limelightEstimatedPosition = new Pose2d();
-
-    /** Creates a new DriveSubsystem. */
+    /**
+     * Creates a new DriveSubsystem.
+     */
     public DriveSubsystem() {
         // Usage reporting for MAXSwerve template
         HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
@@ -77,9 +76,9 @@ public class DriveSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         // Update the odometry in the periodic block
-        m_odometry.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-                new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                        m_rearLeft.getPosition(), m_rearRight.getPosition() });
+        swerveDrivePoseEstimator.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+                new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                        m_rearLeft.getPosition(), m_rearRight.getPosition()});
 
         limelights.forEach(limelight -> {
             limelightPoseTracking(limelight);
@@ -100,7 +99,7 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("quest y", robotPose.getY());
             SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
 
-            m_odometry.resetPose(robotPose.toPose2d());
+            swerveDrivePoseEstimator.resetPose(robotPose.toPose2d());
         } else {
             SmartDashboard.putString("quest state", "no quest");
         }
@@ -112,13 +111,13 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Updates the odometry vision measurement using the Limelight's pose readings.
      * This should be called periodically.
-     * 
+     *
      * @param limelight The limelight string identifier
      */
     private void limelightPoseTracking(String limelight) {
 
         // Variable for whether or not we accept the limelight pose measurement
-        boolean doRejectUpdate = false;
+        boolean shouldRejectUpdate = false;
 
         // Receiving robot pose depending on which alliance we are in
         LimelightHelpers.PoseEstimate estimatedPose = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
@@ -126,30 +125,29 @@ public class DriveSubsystem extends SubsystemBase {
         // Filtering the given pose measurement. Dismissing ambiguous or bad measurements
         if (estimatedPose.tagCount == 1 && estimatedPose.rawFiducials.length == 1) {
             if (estimatedPose.rawFiducials[0].ambiguity > .7) {
-                doRejectUpdate = true;
+                shouldRejectUpdate = true;
             }
             if (estimatedPose.rawFiducials[0].distToCamera > 3) {
-                doRejectUpdate = true;
+                shouldRejectUpdate = true;
             }
         }
         if (estimatedPose.tagCount == 0) {
-            doRejectUpdate = true;
+            shouldRejectUpdate = true;
         }
 
-        if (!doRejectUpdate) {
-            // Updating the vision measurement with the given pose from the limelight
-            Pose2d pose = estimatedPose.pose;
-            double timestamp = estimatedPose.timestampSeconds;
+        if (shouldRejectUpdate)
+            return;
 
-            var limelightStdDevs = edu.wpi.first.math.VecBuilder.fill(0.50, // x meters
-                    0.50, // y meters
-                    1 // theta (ignore)
-            );
+        // Updating the vision measurement with the given pose from the limelight
+        Pose2d pose = estimatedPose.pose;
+        double timestamp = estimatedPose.timestampSeconds;
 
-            limelightEstimatedPosition = pose;
+        var limelightStdDevs = edu.wpi.first.math.VecBuilder.fill(0.50, // x meters
+                0.50, // y meters
+                1 // theta (ignore)
+        );
 
-            m_odometry.addVisionMeasurement(pose, timestamp, limelightStdDevs);
-        }
+        swerveDrivePoseEstimator.addVisionMeasurement(pose, timestamp, limelightStdDevs);
 
     }
 
@@ -159,7 +157,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @return The pose.
      */
     public Pose2d getPose() {
-        return m_odometry.getEstimatedPosition();
+        return swerveDrivePoseEstimator.getEstimatedPosition();
     }
 
     /**
@@ -168,9 +166,9 @@ public class DriveSubsystem extends SubsystemBase {
      * @param pose The pose to which to set the odometry.
      */
     public void resetOdometry(Pose2d pose) {
-        m_odometry.resetPosition(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-                new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                        m_rearLeft.getPosition(), m_rearRight.getPosition() },
+        swerveDrivePoseEstimator.resetPosition(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+                new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                        m_rearLeft.getPosition(), m_rearRight.getPosition()},
                 pose);
 
         Pose3d pose3d = new Pose3d(pose);
@@ -194,7 +192,7 @@ public class DriveSubsystem extends SubsystemBase {
 
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(fieldRelative
                 ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                        Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)))
+                Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)))
                 : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
                 DriveConstants.kMaxSpeedMetersPerSecond);
@@ -227,7 +225,9 @@ public class DriveSubsystem extends SubsystemBase {
         m_rearRight.setDesiredState(desiredStates[3]);
     }
 
-    /** Resets the drive encoders to currently read a position of 0. */
+    /**
+     * Resets the drive encoders to currently read a position of 0.
+     */
     public void resetEncoders() {
         m_frontLeft.resetEncoders();
         m_rearLeft.resetEncoders();
@@ -235,7 +235,9 @@ public class DriveSubsystem extends SubsystemBase {
         m_rearRight.resetEncoders();
     }
 
-    /** Zeroes the heading of the robot. */
+    /**
+     * Zeroes the heading of the robot.
+     */
     public void zeroHeading() {
         m_gyro.reset();
     }
