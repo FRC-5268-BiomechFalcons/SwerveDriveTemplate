@@ -12,6 +12,8 @@ import java.util.List;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -20,6 +22,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
@@ -43,6 +46,12 @@ public class DriveSubsystem extends SubsystemBase {
             DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
     private final MAXSwerveModule m_rearRight = new MAXSwerveModule(DriveConstants.kRearRightDrivingCanId,
             DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
+
+    private static final Vector<N3> limelightStdDevs = VecBuilder.fill(
+            0.50, // x meters
+            0.50, // y meters
+            1 // theta (ignore)
+    );
 
     // The gyro sensor
     private final ADIS16470_IMU m_gyro = new ADIS16470_IMU();
@@ -141,11 +150,6 @@ public class DriveSubsystem extends SubsystemBase {
         // Updating the vision measurement with the given pose from the limelight
         Pose2d pose = estimatedPose.pose;
         double timestamp = estimatedPose.timestampSeconds;
-
-        var limelightStdDevs = edu.wpi.first.math.VecBuilder.fill(0.50, // x meters
-                0.50, // y meters
-                1 // theta (ignore)
-        );
 
         swerveDrivePoseEstimator.addVisionMeasurement(pose, timestamp, limelightStdDevs);
 
