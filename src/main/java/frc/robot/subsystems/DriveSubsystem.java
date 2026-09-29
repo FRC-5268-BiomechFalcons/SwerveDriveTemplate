@@ -125,27 +125,21 @@ public class DriveSubsystem extends SubsystemBase {
      */
     private void limelightPoseTracking(String limelight) {
 
-        // Variable for whether or not we accept the limelight pose measurement
-        boolean shouldRejectUpdate = false;
-
         // Receiving robot pose depending on which alliance we are in
         LimelightHelpers.PoseEstimate estimatedPose = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
         // Filtering the given pose measurement. Dismissing ambiguous or bad measurements
         if (estimatedPose.tagCount == 1 && estimatedPose.rawFiducials.length == 1) {
             if (estimatedPose.rawFiducials[0].ambiguity > .7) {
-                shouldRejectUpdate = true;
+                return;
             }
             if (estimatedPose.rawFiducials[0].distToCamera > 3) {
-                shouldRejectUpdate = true;
+                return;
             }
         }
         if (estimatedPose.tagCount == 0) {
-            shouldRejectUpdate = true;
-        }
-
-        if (shouldRejectUpdate)
             return;
+        }
 
         // Updating the vision measurement with the given pose from the limelight
         swerveDrivePoseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds, limelightStdDevs);
