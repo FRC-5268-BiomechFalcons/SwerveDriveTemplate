@@ -88,9 +88,7 @@ public class DriveSubsystem extends SubsystemBase {
                 new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition()});
 
-        limelights.forEach(limelight -> {
-            limelightPoseTracking(limelight);
-        });
+        limelights.forEach(this::limelightPoseTracking);
 
         questNav.commandPeriodic();
         PoseFrame[] poseFrames = questNav.getAllUnreadPoseFrames();
