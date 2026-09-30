@@ -65,7 +65,7 @@ public class DriveSubsystem extends SubsystemBase {
      */);
 
     // Odometry class for tracking robot pose
-    SwerveDrivePoseEstimator swerveDrivePoseEstimator = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
+    SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
             Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
             new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
                     m_rearLeft.getPosition(), m_rearRight.getPosition()},
@@ -85,7 +85,7 @@ public class DriveSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         // Update the odometry in the periodic block
-        swerveDrivePoseEstimator.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+        poseEstimator.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
                 new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition()});
 
@@ -108,7 +108,7 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("quest y", robotPose.getY());
             SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
 
-            swerveDrivePoseEstimator.resetPose(robotPose.toPose2d());
+            poseEstimator.resetPose(robotPose.toPose2d());
         } else {
             SmartDashboard.putString("quest state", "no quest");
         }
@@ -142,7 +142,7 @@ public class DriveSubsystem extends SubsystemBase {
         }
 
         // Updating the vision measurement with the given pose from the limelight
-        swerveDrivePoseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds, limelightStdDevs);
+        poseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds, limelightStdDevs);
 
     }
 
@@ -152,7 +152,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @return The pose.
      */
     public Pose2d getPose() {
-        return swerveDrivePoseEstimator.getEstimatedPosition();
+        return poseEstimator.getEstimatedPosition();
     }
 
     /**
@@ -161,7 +161,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param pose The pose to which to set the odometry.
      */
     public void resetOdometry(Pose2d pose) {
-        swerveDrivePoseEstimator.resetPosition(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+        poseEstimator.resetPosition(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
                 new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
                         m_rearLeft.getPosition(), m_rearRight.getPosition()},
                 pose);
