@@ -50,7 +50,7 @@ public class DriveSubsystem extends SubsystemBase {
     private static final Vector<N3> limelightStdDevs = VecBuilder.fill(
             0.50, // x meters
             0.50, // y meters
-            1 // theta (ignore)
+            9999 // theta (ignore)
     );
 
     // The gyro sensor
