@@ -27,6 +27,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -51,6 +52,7 @@ public class DriveSubsystem extends SubsystemBase {
             0.50, // y meters
             9999 // theta (ignore)
     );
+    private static final Vector<N3> questNavStdDevs = VecBuilder.fill(0.08, 0.08, 0.035);
 
     // The gyro sensor
     private final ADIS16470_IMU m_gyro = new ADIS16470_IMU();
@@ -97,6 +99,7 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putString("quest state", "quest available");
 
             // Get the most recent Quest pose
+            PoseFrame poseFrame = poseFrames[poseFrames.length - 1];
             Pose3d questPose = poseFrames[poseFrames.length - 1].questPose3d();
             Pose3d robotPose = questPose.transformBy(Constants.QuestConstants.ROBOT_TO_QUEST.inverse());
 
@@ -105,7 +108,7 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("quest y", robotPose.getY());
             SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
 
-            poseEstimator.resetPose(robotPose.toPose2d());
+            poseEstimator.addVisionMeasurement(robotPose.toPose2d(), poseFrame.dataTimestamp(), questNavStdDevs);
         } else {
             SmartDashboard.putString("quest state", "no quest");
         }
