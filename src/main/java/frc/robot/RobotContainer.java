@@ -33,7 +33,7 @@ import frc.robot.subsystems.DriveSubsystem;
  */
 public class RobotContainer {
     // The robot's subsystems
-    private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+    private final DriveSubsystem m_robotDrive = DriveSubsystem.getInstance();
 
     // The driver's controller
     CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
