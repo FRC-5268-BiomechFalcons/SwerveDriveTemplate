@@ -36,19 +36,22 @@ import frc.robot.Constants.DriveConstants;
 import gg.questnav.questnav.PoseFrame;
 import gg.questnav.questnav.QuestNav;
 
+
 public class DriveSubsystem extends SubsystemBase {
+
+    private static final DriveSubsystem instance = new DriveSubsystem();
+
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(DriveConstants.kFrontLeftDrivingCanId,
-            DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
+        DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
     private final MAXSwerveModule m_frontRight = new MAXSwerveModule(DriveConstants.kFrontRightDrivingCanId,
-            DriveConstants.kFrontRightTurningCanId, DriveConstants.kFrontRightChassisAngularOffset);
+        DriveConstants.kFrontRightTurningCanId, DriveConstants.kFrontRightChassisAngularOffset);
     private final MAXSwerveModule m_rearLeft = new MAXSwerveModule(DriveConstants.kRearLeftDrivingCanId,
-            DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
+        DriveConstants.kRearLeftTurningCanId, DriveConstants.kBackLeftChassisAngularOffset);
     private final MAXSwerveModule m_rearRight = new MAXSwerveModule(DriveConstants.kRearRightDrivingCanId,
-            DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
+        DriveConstants.kRearRightTurningCanId, DriveConstants.kBackRightChassisAngularOffset);
 
-    private static final Vector<N3> limelightStdDevs = VecBuilder.fill(
-            0.50, // x meters
+    private static final Vector<N3> limelightStdDevs = VecBuilder.fill(0.50, // x meters
             0.50, // y meters
             9999 // theta (ignore)
     );
@@ -61,16 +64,16 @@ public class DriveSubsystem extends SubsystemBase {
     QuestNav questNav = new QuestNav();
 
     private static final List<String> limelights = new ArrayList<>(/*
-     * "limelight-shooter",
-     * "limelight" - for example
-     */);
+                                                                    * "limelight-shooter",
+                                                                    * "limelight" - for example
+                                                                    */);
 
     // Odometry class for tracking robot pose
     SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(DriveConstants.kDriveKinematics,
-            Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-            new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                    m_rearLeft.getPosition(), m_rearRight.getPosition()},
-            new Pose2d());
+        Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
+        new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                m_rearLeft.getPosition(), m_rearRight.getPosition() },
+        new Pose2d());
 
     // Percent of max speed, used for fine control
     private double m_speedModifier = 1.0;
@@ -78,17 +81,22 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Creates a new DriveSubsystem.
      */
-    public DriveSubsystem() {
+    private DriveSubsystem() {
         // Usage reporting for MAXSwerve template
         HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
+    }
+
+    // Returns the singleton instance of the DriveSubsystem.
+    public static DriveSubsystem getInstance() {
+        return instance;
     }
 
     @Override
     public void periodic() {
         // Update the odometry in the periodic block
         poseEstimator.update(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-                new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                        m_rearLeft.getPosition(), m_rearRight.getPosition()});
+                new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                        m_rearLeft.getPosition(), m_rearRight.getPosition() });
 
         limelights.forEach(this::limelightPoseTracking);
 
@@ -108,7 +116,8 @@ public class DriveSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("quest y", robotPose.getY());
             SmartDashboard.putNumber("quest theta", robotPose.getRotation().getMeasureZ().in(Degrees));
 
-            poseEstimator.addVisionMeasurement(robotPose.toPose2d(), poseFrame.dataTimestamp(), questNavStdDevs);
+            poseEstimator.addVisionMeasurement(robotPose.toPose2d(), poseFrame.dataTimestamp(),
+                    questNavStdDevs);
         } else {
             SmartDashboard.putString("quest state", "no quest");
         }
@@ -142,7 +151,8 @@ public class DriveSubsystem extends SubsystemBase {
         }
 
         // Updating the vision measurement with the given pose from the limelight
-        poseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds, limelightStdDevs);
+        poseEstimator.addVisionMeasurement(estimatedPose.pose, estimatedPose.timestampSeconds,
+                limelightStdDevs);
 
     }
 
@@ -162,8 +172,8 @@ public class DriveSubsystem extends SubsystemBase {
      */
     public void resetOdometry(Pose2d pose) {
         poseEstimator.resetPosition(Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)),
-                new SwerveModulePosition[]{m_frontLeft.getPosition(), m_frontRight.getPosition(),
-                        m_rearLeft.getPosition(), m_rearRight.getPosition()},
+                new SwerveModulePosition[] { m_frontLeft.getPosition(), m_frontRight.getPosition(),
+                        m_rearLeft.getPosition(), m_rearRight.getPosition() },
                 pose);
 
         Pose3d pose3d = new Pose3d(pose);
@@ -187,7 +197,7 @@ public class DriveSubsystem extends SubsystemBase {
 
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(fieldRelative
                 ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)))
+                        Rotation2d.fromDegrees(m_gyro.getAngle(IMUAxis.kZ)))
                 : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
                 DriveConstants.kMaxSpeedMetersPerSecond);
