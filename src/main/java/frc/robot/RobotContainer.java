@@ -5,6 +5,7 @@
 package frc.robot;
 
 import java.util.List;
+import java.util.Optional;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -15,6 +16,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -37,6 +40,7 @@ public class RobotContainer {
 
     // The driver's controller
     CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
+    //DriverStation m_DriverStation = new DriverStation();
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -55,6 +59,8 @@ public class RobotContainer {
                         -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
                         true),
                     m_robotDrive));
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+
     }
 
     /*
