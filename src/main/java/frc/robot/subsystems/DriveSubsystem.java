@@ -37,6 +37,9 @@ import gg.questnav.questnav.QuestNav;
 
 
 public class DriveSubsystem extends SubsystemBase {
+
+    private static final DriveSubsystem instance = new DriveSubsystem();
+
     // Create MAXSwerveModules
     private final MAXSwerveModule frontLeft = new MAXSwerveModule(DriveConstants.kFrontLeftDrivingCanId,
         DriveConstants.kFrontLeftTurningCanId, DriveConstants.kFrontLeftChassisAngularOffset);
@@ -77,9 +80,14 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Creates a new DriveSubsystem.
      */
-    public DriveSubsystem() {
+    private DriveSubsystem() {
         // Usage reporting for MAXSwerve template
         HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_MaxSwerve);
+    }
+
+    // Returns the singleton instance of the DriveSubsystem.
+    public static DriveSubsystem getInstance() {
+        return instance;
     }
 
     @Override
